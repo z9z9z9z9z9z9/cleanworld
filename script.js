@@ -1,16 +1,32 @@
-document.getElementById("uploadForm").addEventListener("submit", async function(event) {
+// Moving lines effect
+const createLines = () => {
+  const linesContainer = document.createElement("div");
+  linesContainer.className = "moving-lines";
+  document.body.appendChild(linesContainer);
+
+  for (let i = 0; i < 100; i++) {
+    const line = document.createElement("div");
+    line.className = "line";
+    linesContainer.appendChild(line);
+  }
+
+  document.addEventListener("mousemove", (e) => {
+    linesContainer.style.transform = `translate(${e.clientX / 100}px, ${e.clientY / 100}px)`;
+  });
+};
+
+// API call and form handling
+document.getElementById("uploadForm").addEventListener("submit", async (event) => {
   event.preventDefault();
-  
   const imageFile = document.getElementById("imageUpload").files[0];
   if (!imageFile) return alert("Please upload an image.");
 
   const formData = new FormData();
   formData.append("file", imageFile);
 
-  // Replace 'YOUR_API_ENDPOINT' with the actual endpoint URL
-  const response = await fetch("YOUR_API_ENDPOINT", {
+  const response = await fetch("/api/face-recognition", {  // Calls Vercel function
     method: "POST",
-    body: formData
+    body: formData,
   });
 
   if (!response.ok) {
@@ -24,9 +40,9 @@ document.getElementById("uploadForm").addEventListener("submit", async function(
 
 function displayResults(data) {
   const resultsDiv = document.getElementById("results");
-  resultsDiv.innerHTML = "";  // Clear previous results
+  resultsDiv.innerHTML = ""; // Clear previous results
 
-  data.matches.forEach(match => {
+  data.matches.forEach((match) => {
     const result = document.createElement("div");
     result.innerHTML = `
       <img src="${match.photo_url}" alt="Matched face">
@@ -36,3 +52,5 @@ function displayResults(data) {
     resultsDiv.appendChild(result);
   });
 }
+
+createLines();
