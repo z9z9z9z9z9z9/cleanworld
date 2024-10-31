@@ -3,15 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Face Recognition Search Engine</title>
+  <title>Custom Face Recognition Search Engine</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
     <h1>Face Recognition Search Engine</h1>
-    <p>Upload a photo to find matches in our database.</p>
-    <form id="uploadForm">
-      <input type="file" id="imageUpload" accept="image/*" required>
+    <form id="searchForm">
+      <input type="file" id="imageUpload" accept="image/*" required><br>
+      <input type="text" id="name" placeholder="First Name"><br>
+      <input type="text" id="lastName" placeholder="Last Name"><br>
+      <input type="text" id="country" placeholder="Country"><br>
       <button type="submit">Search</button>
     </form>
     <div id="results"></div>
