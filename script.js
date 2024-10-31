@@ -1,3 +1,11 @@
+// Load the models
+async function loadModels() {
+  const MODEL_URL = '/models'; // Adjust the path to your model files if needed
+  await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+  await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+  await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+}
+
 document.getElementById("searchForm").addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -7,47 +15,61 @@ document.getElementById("searchForm").addEventListener("submit", async (event) =
   const lastName = document.getElementById("lastName").value;
   const country = document.getElementById("country").value;
 
-  // Simulate fetching data from local data folder
-  const results = searchForProfiles(name, lastName, country);
+  // Load models
+  await loadModels();
 
-  // Display results
-  displayResults(results);
+  // Get uploaded image
+  const img = await faceapi.bufferToImage(imageFile);
+  const detections = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
+
+  if (detections.length > 0) {
+    const userFaceDescriptor = detections[0].descriptor;
+
+    // Simulate fetching data from local data folder
+    const profiles = await loadProfiles();
+
+    const matches = profiles.filter(profile => {
+      return faceapi.euclideanDistance(userFaceDescriptor, profile.faceDescriptor) < 0.6; // Adjust threshold as needed
+    });
+
+    displayResults(matches);
+  } else {
+    alert("No face detected. Please try again.");
+  }
 });
 
-// Function to search for profiles based on provided input
-function searchForProfiles(name, lastName, country) {
-  const results = [];
-
-  // Replace this with actual local data reading logic
-  const data = [
-    {
-      name: "John",
-      last_name: "Doe",
-      age: "30",
-      country: "USA",
-      photo_url: "/data/person1/image1.png",
-    },
-    {
-      name: "Jane",
-      last_name: "Smith",
-      age: "25",
-      country: "Canada",
-      photo_url: "/data/person2/image2.jpg",
-    }
-  ];
-
-  // Filter the data based on search criteria
-  data.forEach(profile => {
-    if (
-      (!name || profile.name.toLowerCase() === name.toLowerCase()) &&
-      (!lastName || profile.last_name.toLowerCase() === lastName.toLowerCase()) &&
-      (!country || profile.country.toLowerCase() === country.toLowerCase())
-    ) {
-      results.push(profile);
-    }
+// Function to load profiles and their face descriptors
+async function loadProfiles() {
+  const profiles = [];
+  
+  // This is where you would dynamically load images and create face descriptors for each one
+  // For simplicity, we will add hardcoded profiles
+  profiles.push({
+    name: "John",
+    last_name: "Doe",
+    age: "30",
+    country: "USA",
+    photo_url: "/data/person1/image1.png",
+    faceDescriptor: await getFaceDescriptor('/data/person1/image1.png')
   });
 
-  return results;
+  profiles.push({
+    name: "Jane",
+    last_name: "Smith",
+    age: "25",
+    country: "Canada",
+    photo_url: "/data/person2/image2.jpg",
+    faceDescriptor: await getFaceDescriptor('/data/person2/image2.jpg')
+  });
+
+  return profiles;
+}
+
+// Function to get face descriptor from an image
+async function getFaceDescriptor(imageUrl) {
+  const img = await faceapi.fetchImage(imageUrl);
+  const detections = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
+  return detections.length > 0 ? detections[0].descriptor : null;
 }
 
 // Function to display search results
