@@ -1,30 +1,61 @@
 document.getElementById("searchForm").addEventListener("submit", async (event) => {
   event.preventDefault();
-  const formData = new FormData();
 
-  formData.append("file", document.getElementById("imageUpload").files[0]);
-  formData.append("name", document.getElementById("name").value);
-  formData.append("last_name", document.getElementById("lastName").value);
-  formData.append("country", document.getElementById("country").value);
+  // Get user input
+  const imageFile = document.getElementById("imageUpload").files[0];
+  const name = document.getElementById("name").value;
+  const lastName = document.getElementById("lastName").value;
+  const country = document.getElementById("country").value;
 
-  const response = await fetch("/api/search", {
-    method: "POST",
-    body: formData
-  });
+  // Simulate fetching data from local data folder
+  const results = searchForProfiles(name, lastName, country);
 
-  if (response.ok) {
-    const data = await response.json();
-    displayResults(data);
-  } else {
-    alert("Error during search. Try again.");
-  }
+  // Display results
+  displayResults(results);
 });
 
+// Function to search for profiles based on provided input
+function searchForProfiles(name, lastName, country) {
+  const results = [];
+
+  // Replace this with actual local data reading logic
+  const data = [
+    {
+      name: "John",
+      last_name: "Doe",
+      age: "30",
+      country: "USA",
+      photo_url: "/data/person1/image1.png",
+    },
+    {
+      name: "Jane",
+      last_name: "Smith",
+      age: "25",
+      country: "Canada",
+      photo_url: "/data/person2/image2.jpg",
+    }
+  ];
+
+  // Filter the data based on search criteria
+  data.forEach(profile => {
+    if (
+      (!name || profile.name.toLowerCase() === name.toLowerCase()) &&
+      (!lastName || profile.last_name.toLowerCase() === lastName.toLowerCase()) &&
+      (!country || profile.country.toLowerCase() === country.toLowerCase())
+    ) {
+      results.push(profile);
+    }
+  });
+
+  return results;
+}
+
+// Function to display search results
 function displayResults(data) {
   const resultsDiv = document.getElementById("results");
   resultsDiv.innerHTML = ""; // Clear previous results
 
-  data.matches.forEach(match => {
+  data.forEach(match => {
     const result = document.createElement("div");
     result.classList.add("profile");
 
