@@ -1,35 +1,30 @@
-// Load the models
 async function loadModels() {
-  const MODEL_URL = '/models'; // Adjust the path to your model files if needed
-  await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-  await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-  await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+  // Load models from CDN or local, if needed
+  await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+  await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
+  await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
 }
 
 document.getElementById("searchForm").addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  // Get user input
   const imageFile = document.getElementById("imageUpload").files[0];
-  const name = document.getElementById("name").value;
-  const lastName = document.getElementById("lastName").value;
-  const country = document.getElementById("country").value;
 
-  // Load models
+  // Load models before processing
   await loadModels();
 
-  // Get uploaded image
+  // Load the uploaded image
   const img = await faceapi.bufferToImage(imageFile);
   const detections = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptors();
 
   if (detections.length > 0) {
     const userFaceDescriptor = detections[0].descriptor;
 
-    // Simulate fetching data from local data folder
+    // Load profiles from the /data directory
     const profiles = await loadProfiles();
 
     const matches = profiles.filter(profile => {
-      return faceapi.euclideanDistance(userFaceDescriptor, profile.faceDescriptor) < 0.6; // Adjust threshold as needed
+      return faceapi.euclideanDistance(userFaceDescriptor, profile.faceDescriptor) < 0.6; // Match threshold
     });
 
     displayResults(matches);
@@ -42,27 +37,46 @@ document.getElementById("searchForm").addEventListener("submit", async (event) =
 async function loadProfiles() {
   const profiles = [];
   
-  // This is where you would dynamically load images and create face descriptors for each one
-  // For simplicity, we will add hardcoded profiles
-  profiles.push({
-    name: "John",
-    last_name: "Doe",
-    age: "30",
-    country: "USA",
-    photo_url: "/data/person1/image1.png",
-    faceDescriptor: await getFaceDescriptor('/data/person1/image1.png')
-  });
+  // Replace with actual file loading logic
+  const personFolders = ["person1", "person2"]; // Add more folder names as needed
 
-  profiles.push({
-    name: "Jane",
-    last_name: "Smith",
-    age: "25",
-    country: "Canada",
-    photo_url: "/data/person2/image2.jpg",
-    faceDescriptor: await getFaceDescriptor('/data/person2/image2.jpg')
-  });
+  for (const folder of personFolders) {
+    const imgUrl = `/data/${folder}/image1.png`; // Assuming a standard naming for images
+    const infoUrl = `/data/${folder}/info.txt`;
+
+    // Get face descriptor
+    const faceDescriptor = await getFaceDescriptor(imgUrl);
+
+    // Fetch info.txt
+    const response = await fetch(infoUrl);
+    const info = await response.text();
+
+    // Parse the info based on the new format
+    const profileData = parseProfileInfo(info);
+
+    profiles.push({
+      ...profileData,
+      photo_url: imgUrl,
+      faceDescriptor: faceDescriptor
+    });
+  }
 
   return profiles;
+}
+
+// Function to parse profile information from text
+function parseProfileInfo(info) {
+  const lines = info.split("\n");
+  const profile = {};
+
+  lines.forEach(line => {
+    const [key, value] = line.split(":").map(part => part.trim());
+    if (key && value) {
+      profile[key] = value;
+    }
+  });
+
+  return profile;
 }
 
 // Function to get face descriptor from an image
